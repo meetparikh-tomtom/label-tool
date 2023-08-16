@@ -1,17 +1,43 @@
-var data = require('../data/results_processed.json');
-var map = L.map('map').setView([48.95293, 8.91368], 13);
+const DEFAULT_COLOR = "#3388ff";
+const HIGHLIGHT_COLOR = "red";
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+var data = require("../data/results_processed.json");
+
+// console.log(data.length);
+// console.log(data[0].pointsInTrace);
+// console.log(data[0].pointsInTrace[0]);
+
+data.forEach((d, i) => {
+  d.index = i;
+  d.latLngs = d.pointsInTrace.map((p) => [p.latitude, p.longitude]);
+});
+
+var map = L.map("map").setView([48.95293, 8.91368], 13);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
-console.log(data.length)
-console.log(data[0].pointsInTrace)
-console.log(data[0].pointsInTrace[0])
-for (var i = 0; i < data.length; i++) {
-    for (var j = 0; j < data[i].pointsInTrace.length; j++ ) {
-        L.marker([data[i].pointsInTrace[j].latitude, data[i].pointsInTrace[j].longitude]).addTo(map)
-            .bindPopup("popup")
-            // .bindPopup("charge:" + data[i].pointsInTrace[j].charge)
-    }
+// Displaying markers for every point seems to slow down rendering
+// Highlight a route => dont slow down browser
+function highlight(d) {
+  if (this.highlighted) {
+    this.highlighted.chargeMarkersLayer.remove();
+    this.highlighted.d.line.setStyle({ color: DEFAULT_COLOR });
+  }
+  d.line.setStyle({ color: HIGHLIGHT_COLOR });
+  const markers = d.latLngs.map((latLng, i) =>
+    L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`)
+  );
+  this.highlighted = {
+    d,
+    chargeMarkersLayer: L.featureGroup(markers).addTo(map),
+  };
 }
+
+data.map((d) => {
+  d.line = L.polyline(d.latLngs).bindPopup(`Route ${d.index}`).on(
+    "click",
+    () => highlight(d),
+  ).addTo(map);
+});
