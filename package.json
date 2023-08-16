@@ -1,0 +1,21 @@
+{
+    "name": "parcel",
+    "version": "1.0.0",
+    "description": "",
+    "source": "public/index.html",
+    "scripts": {
+        "dev": "parcel",
+        "build": "parcel build"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "parcel-bundler": "latest",
+        "parcel": "latest"
+    },
+    "dependencies": {
+        "leaflet": "^1.9.4"
+    }
+}
+  
