@@ -1,6 +1,17 @@
 const DEFAULT_COLOR = "#3388ff";
 const HIGHLIGHT_COLOR = "red";
 
+const START_ICON = L.icon({
+    ...L.Icon.Default.prototype.options,
+    iconRetinaUrl: undefined,
+    iconUrl: require("./img/marker-icon-start.png"),
+});
+  const END_ICON = L.icon({
+    ...L.Icon.Default.prototype.options,
+    iconRetinaUrl: undefined,
+    iconUrl: require("./img/marker-icon-end.png"),
+});
+
 var data = require("../data/results_processed.json");
 
 // console.log(data.length);
@@ -29,6 +40,10 @@ function highlight(d) {
   const markers = d.latLngs.map((latLng, i) =>
     L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`)
   );
+  if (markers.length) {
+    markers[0].setIcon(START_ICON);
+    markers[markers.length - 1].setIcon(END_ICON);
+  }
   this.highlighted = {
     d,
     chargeMarkersLayer: L.featureGroup(markers).addTo(map),
