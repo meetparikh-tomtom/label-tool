@@ -2,8 +2,18 @@ let globals = {
   highlighted: undefined
 };
 
-const DEFAULT_COLOR = "#3388ff";
-const HIGHLIGHT_COLOR = "red";
+require("leaflet-hotline")(L);
+
+const HIGHLIGHTED_PALETTE = {
+  0.0: "red",
+  0.5: "yellow",
+  1.0: "green",
+};
+const NORMAL_PALETTE = {
+  0.0: "pink",
+  0.5: "lightyellow",
+  1.0: "lightgreen",
+};
 
 const START_ICON = L.icon({
     ...L.Icon.Default.prototype.options,
@@ -33,13 +43,17 @@ var data = require("../data/results_processed.json");
 // console.log(data[0].pointsInTrace[0]);
 
 data.forEach((d, i) => {
-  d.index = i;
-  d.latLngs = d.pointsInTrace.map((p) => [p.latitude, p.longitude]);
-  //d.infos = d.pointsInTrace.map((p) => [p.charge, p.timestamp]);
+  d.index = i;  // trip_id
+  d.latLngs = d.pointsInTrace.map((p) => [p.latitude, p.longitude, p.charge]);
+  [d.minCharge, d.maxCharge] = d.pointsInTrace.reduce(
+    (acc, p) => [Math.min(acc[0], p.charge), Math.max(acc[1], p.charge)],
+    [Infinity, -Infinity],
+  );
+  // hack: leaflet hotline gives an err
+  if (d.maxCharge == d.minCharge) d.maxCharge += 0.00001;
   d.points_info = d.pointsInTrace.map((p,i) => 
     [i,p.charge,p.latitude,p.longitude]
   );
-  //myDiv.appendChild(document.createElement("div").innerHTML(d.latLngs.toString()))
 });
 
 var map = L.map("map").setView([48.95293, 8.91368], 13);
@@ -57,11 +71,15 @@ function editPoint(d, point) {
 // Displaying markers for every point seems to slow down rendering
 // Highlight a route => dont slow down browser
 function highlight(d) {
-  if (globals.highlighted) {
-    globals.highlighted.chargeMarkersLayer.remove();
-    globals.highlighted.d.line.setStyle({ color: DEFAULT_COLOR });
+  if (this.highlighted) {
+    this.highlighted.chargeMarkersLayer.remove();
+    this.highlighted.d.line.setStyle({
+      outlineWidth: 1,
+      palette: NORMAL_PALETTE,
+    });
   }
-  d.line.setStyle({ color: HIGHLIGHT_COLOR });
+  d.line.setStyle({ outlineWidth: 5, palette: HIGHLIGHTED_PALETTE });
+  d.line.bringToFront();
   const markers = d.latLngs.map((latLng, i) =>
     // L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`).on("click",
     //   () => editPoint(d.pointsInTrace[i].charge)
@@ -128,9 +146,17 @@ function showInfo() {
 
 
 data.map((d) => {
-  d.line = L.polyline(d.latLngs).bindPopup(`Route ${d.index}`).on(
-    "click",
-    () => highlight(d),
-  ).addTo(map);
-  showInfo();
+  // d.line = L.polyline(d.latLngs).bindPopup(`Route ${d.index}`).on(
+  //   "click",
+  //   () => highlight(d),
+  // ).addTo(map);
+  d.line = L.hotline(d.latLngs, {
+    min: d.minCharge,
+    max: d.maxCharge,
+    palette: NORMAL_PALETTE,
+  })
+    .bindPopup(`Route ${d.index} (${d.minCharge}, ${d.maxCharge})`).on(
+      "click",
+      () => highlight(d),
+    ).addTo(map);
 });
