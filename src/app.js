@@ -1,7 +1,6 @@
-let globals = {
-  highlighted: undefined
-};
-
+import Leaflet from "leaflet";
+import "leaflet-hotline";
+var L = Leaflet.noConflict();
 require("leaflet-hotline")(L);
 
 const HIGHLIGHTED_PALETTE = {
@@ -78,7 +77,7 @@ function highlight(d) {
       palette: NORMAL_PALETTE,
     });
   }
-  d.line.setStyle({ outlineWidth: 5, palette: HIGHLIGHTED_PALETTE });
+  d.line.setStyle({ outlineWidth: 3, palette: HIGHLIGHTED_PALETTE });
   d.line.bringToFront();
   const markers = d.latLngs.map((latLng, i) =>
     // L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`).on("click",
@@ -89,12 +88,11 @@ function highlight(d) {
     markers[0].setIcon(START_ICON);
     markers[markers.length - 1].setIcon(END_ICON);
   }
-  globals.highlighted = {
+  this.highlighted = {
     d,
     chargeMarkersLayer: L.featureGroup(markers).addTo(map),
   };
-  // console.log(globals.highlighted.d)
-  showInfo();
+  showInfo(this);
 }
 
 function movePoint(track_id, point_id){
@@ -112,27 +110,26 @@ function movePoint(track_id, point_id){
 }
 
 window.movePoint = movePoint;
-window.globals = globals;
 
 var myDiv = document.getElementById("info");
-function showInfo() {
+function showInfo(d) {
   var innerHtml = "none";
   // console.log(globals.highlighted);
   // console.log(globals.highlighted.d);
   var inner_data = "";
-  if (globals.highlighted) {
+  if (d.highlighted) {
     //console.log(globals.highlighted.d.infos)
-    globals.highlighted.d.points_info.forEach( point => {
+    d.highlighted.d.points_info.forEach( point => {
       inner_data+= `
         <div class="point_info"> 
           <span> index: ${point[0].toString()}, SoC: ${point[1].toString()}, timestamp: ${point[2].toString()} </span>
-          <button onclick="movePoint(${globals.highlighted.d.index}, ${point[0].toString()})">Move</button>
+          <button onclick="movePoint(${d.highlighted.d.index}, ${point[0].toString()})">Move</button>
         </div>`
     });
     innerHtml = `
-    <div id=${globals.highlighted.d.index} class="track_info">
-      <h3> Route Info: ${globals.highlighted.d.index} </h3>
-      <span> Number of points in this route: ${globals.highlighted.d.latLngs.length}
+    <div id=${d.highlighted.d.index} class="track_info">
+      <h3> Route Info: ${d.highlighted.d.index} </h3>
+      <span> Number of points in d route: ${d.highlighted.d.latLngs.length}
       </span>
       <br/>
       <h4> Points: </h4>
