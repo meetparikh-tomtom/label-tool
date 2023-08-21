@@ -11,11 +11,10 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "parcel-bundler": "latest",
-        "parcel": "latest"
+        "parcel": "^2.9.3",
+        "parcel-bundler": "latest"
     },
     "dependencies": {
         "leaflet": "^1.9.4"
     }
 }
-  

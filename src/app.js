@@ -10,11 +10,20 @@ const START_ICON = L.icon({
     iconRetinaUrl: undefined,
     iconUrl: require("./img/marker-icon-start.png"),
 });
-  const END_ICON = L.icon({
+const END_ICON = L.icon({
     ...L.Icon.Default.prototype.options,
     iconRetinaUrl: undefined,
     iconUrl: require("./img/marker-icon-end.png"),
 });
+const ICON = L.icon({
+  ...L.Icon.Default.prototype.options,
+  iconRetinaUrl: undefined,
+  iconUrl: require("./img/marker-icon.png"),
+});
+
+ICON.options.shadowSize = [0,0]
+START_ICON.options.shadowSize = [0,0]
+END_ICON.options.shadowSize = [0,0]
 
 const { latLng } = require("leaflet");
 var data = require("../data/results_processed.json");
@@ -57,7 +66,7 @@ function highlight(d) {
     // L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`).on("click",
     //   () => editPoint(d.pointsInTrace[i].charge)
     // )
-    L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`));
+    L.marker(latLng, {icon: ICON}).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`));
   if (markers.length) {
     markers[0].setIcon(START_ICON);
     markers[markers.length - 1].setIcon(END_ICON);
@@ -92,7 +101,7 @@ function showInfo() {
   var innerHtml = "none";
   // console.log(globals.highlighted);
   // console.log(globals.highlighted.d);
-  inner_data = "";
+  var inner_data = "";
   if (globals.highlighted) {
     //console.log(globals.highlighted.d.infos)
     globals.highlighted.d.points_info.forEach( point => {
