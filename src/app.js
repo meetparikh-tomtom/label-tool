@@ -1,4 +1,4 @@
-import Leaflet from "leaflet";
+import Leaflet, { point } from "leaflet";
 import "leaflet-hotline";
 var L = Leaflet.noConflict();
 require("leaflet-hotline")(L);
@@ -131,7 +131,7 @@ function showInfo(d) {
   var inner_data = "";
   d.points_info.forEach( point => {
     inner_data+= `
-      <li class="point_info"> 
+      <li class="point_info" id="${point[0].toString()}"> 
         <span>id: ${point[0].toString()} | SOC: ${point[1].toString()} | timestamp: ${point[2].toString()} </span>
       </li>`
   });
@@ -146,22 +146,28 @@ function showInfo(d) {
   </div>
   `;
   myDiv.innerHTML += innerHtml;
-  d.list_items = document.getElementById(d.index).getElementsByTagName("li"), current = null;
+  d.list_items = document.getElementsByTagName("li"), current = null, current_track = null;
   for (let i of d.list_items) {
     i.draggable = true;
     i.ondragstart = e => {
       current = i;
-      for (let it of d.list_items) {
-        if (it != current) { it.classList.add("hint"); }
+      for (let track of highlighted){
+        let list_items = document.getElementById(track.index).getElementsByTagName("li")
+        for (let it of list_items) {
+          if (it != current) { it.classList.add("hint"); }
+        }
       }
     };
     i.ondragenter = e => {
       if (i != current) { i.classList.add("active"); }
     };
     i.ondragleave = () => i.classList.remove("active");
-    i.ondragend = () => { for (let it of d.list_items) {
+    i.ondragend = () => { for (let track of highlighted) {
+      let list_items = document.getElementById(track.index).getElementsByTagName("li")
+      for (let it of list_items) {
         it.classList.remove("hint");
         it.classList.remove("active");
+      }
     }};
     i.ondragover = e => e.preventDefault();
     i.ondrop = e => {
@@ -172,28 +178,46 @@ function showInfo(d) {
           if (current == d.list_items[it]) { currentpos = it; }
           if (i == d.list_items[it]) { droppedpos = it; }
         }
-        if (currentpos < droppedpos) {
-          i.parentNode.insertBefore(current, i.nextSibling);
+        let index1 = -1;
+        let index2 = -1;
+        if (droppedpos >= highlighted[0].points_info.length){
+          console.log("droped 1 ")
+          droppedpos -= highlighted[0].points_info.length;
+          index2 = 1
         } else {
-          i.parentNode.insertBefore(current, i);
+          index2 = 0
         }
+        
+        if (currentpos >= highlighted[0].points_info.length){
+          currentpos -= highlighted[0].points_info.length;
+          index1 = 1
+        } else {
+          index1 = 0
+        }
+
+        console.log(index1, currentpos, index2, droppedpos)
+        movePoint(index1, currentpos, index2, droppedpos)
       }
     };
   }
 }
 
-function movePoint(track_id, point_id){
-  console.log(track_id, point_id);
-  old_track = data[track_id];
-  point_idx = old_track.points_info.findIndex(p => p[0] == point_id)
-  point = old_track.points_info.splice(point_idx, 1)[0];
-  point_loc = old_track.pointsInTrace.splice(point_idx, 1)[0];
-  point_latlon = old_track.latLngs.splice(point_idx, 1)[0];
-  let new_track_id = prompt('Index of new track:');
-  new_track = data[new_track_id];
-  new_track.points_info.push(point)
-  new_track.pointsInTrace.push(point_loc)
-  new_track.latLngs.push(point_latlon)
+function movePoint(track1, point1_pos, track2, point2_pos){
+  console.log(track1, point1_pos);
+  console.log(track2, point2_pos);
+
+  old_track = highlighted[track1];
+  new_track = highlighted[track2];
+  point_ = old_track.points_info.splice(point1_pos, 1)[0];
+  point_loc = old_track.pointsInTrace.splice(point1_pos, 1)[0];
+  point_latlon = old_track.latLngs.splice(point1_pos, 1)[0];
+  
+  new_track.points_info.splice(point2_pos, 0, point_);
+  new_track.pointsInTrace.splice(point2_pos, 0, point_loc);
+  new_track.latLngs.splice(point2_pos, 0, point_latlon);
+  myDiv.innerHTML = "";
+  showInfo(highlighted[0]);
+  showInfo(highlighted[1]);
 }
 
 // add someway to edit
