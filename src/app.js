@@ -75,6 +75,32 @@ data.forEach((d, i) => {
     ).addTo(map);
 });
 
+function redraw(d){
+  d.line.remove();
+  d.chargeMarkersLayer.remove();
+  d.line = L.hotline(d.latLngs, {
+    min: 0,
+    max: 37.8,
+    palette: NORMAL_PALETTE,
+  })
+    //.bindPopup(`Route ${d.index} (${d.minCharge}, ${d.maxCharge})`)
+    .on(
+      "click",
+      () => highlight(d),
+    ).addTo(map);
+  
+  d.line.setStyle({ outlineWidth: 3, palette: HIGHLIGHTED_PALETTE });
+  const markers = d.latLngs.map((latLng, i) =>
+    L.marker(latLng, {icon: ICON}).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`).on("click",
+      () => editPoint(d, i)
+    )
+  );
+  if (markers.length) {
+    markers[0].setIcon(START_ICON);
+    markers[markers.length - 1].setIcon(END_ICON);
+  }
+  d.chargeMarkersLayer = L.featureGroup(markers).addTo(map) 
+}
 // Displaying markers for every point seems to slow down rendering
 // Highlight a route => dont slow down browser
 function remove_highlight(d){
@@ -216,6 +242,12 @@ function movePoint(track1, point1_pos, track2, point2_pos){
   new_track.pointsInTrace.splice(point2_pos, 0, point_loc);
   new_track.latLngs.splice(point2_pos, 0, point_latlon);
   myDiv.innerHTML = "";
+  highlighted[0].line.remove()
+  highlighted[0].chargeMarkersLayer.remove()
+  highlighted[1].line.remove()
+  highlighted[1].chargeMarkersLayer.remove()
+  redraw(highlighted[0])
+  redraw(highlighted[1])
   showInfo(highlighted[0]);
   showInfo(highlighted[1]);
 }
@@ -251,13 +283,30 @@ function mergetracks() {
   highlighted[0].points_info = highlighted[0].points_info.concat(highlighted[1].points_info)
   highlighted[0].distance += highlighted[1].distance;
   highlighted[0].consumption += highlighted[1].consumption;
+  highlighted[1].line.remove()
+  highlighted[1].chargeMarkersLayer.remove()
+  redraw(highlighted[0])
+  
+  ind = data.map(e => e.trip_id).indexOf(highlighted[1].trip_id)
+  data.splice(ind, 1);
   highlighted.pop()
   myDiv.innerHTML = ""
   showInfo(highlighted[0])
   console.log(highlighted)
 }
 
+function discardtrack(){
+  if(highlighted.length!=1) return;
+  highlighted[0].chargeMarkersLayer.remove()
+  highlighted[0].line.remove()
+  ind = data.map(e => e.trip_id).indexOf(highlighted[0].trip_id)
+  data.splice(ind, 1);
+  highlighted.pop()
+  myDiv.innerHTML = ""
+}
+
 window.movePoint = movePoint;
 window.remove_highlight = remove_highlight;
 window.exportdata = exportdata;
 window.mergetracks = mergetracks;
+window.discardtrack = discardtrack;

@@ -85,3 +85,17 @@ body {
 	box-shadow: 2px 2px 3px #999;
   border-width: 0;
 }
+
+#float_discard {
+  position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:160px;
+	background-color:rgb(82, 82, 82);
+	color:#FFF;
+	border-radius:15px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #999;
+  border-width: 0;
+}
