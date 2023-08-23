@@ -242,14 +242,19 @@ function movePoint(track1, point1_pos, track2, point2_pos){
   new_track.pointsInTrace.splice(point2_pos, 0, point_loc);
   new_track.latLngs.splice(point2_pos, 0, point_latlon);
   myDiv.innerHTML = "";
-  highlighted[0].line.remove()
-  highlighted[0].chargeMarkersLayer.remove()
-  highlighted[1].line.remove()
-  highlighted[1].chargeMarkersLayer.remove()
-  redraw(highlighted[0])
-  redraw(highlighted[1])
-  showInfo(highlighted[0]);
-  showInfo(highlighted[1]);
+  highlighted[track1].line.remove()
+  highlighted[track1].chargeMarkersLayer.remove()
+  if(track1 != track2){
+    highlighted[track2].line.remove()
+    highlighted[track2].chargeMarkersLayer.remove()
+  }
+  console.log(highlighted)
+  showInfo(highlighted[track1]);
+  redraw(highlighted[track1]);
+  if(track1 != track2){
+    redraw(highlighted[track2]);
+    showInfo(highlighted[track2]);
+  }
 }
 
 // add someway to edit
