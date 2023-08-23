@@ -245,7 +245,16 @@ function exportdata() {
 }
 
 function mergetracks() {
-  alert("merge")
+  if(highlighted.length!=2) return;
+  highlighted[0].latLngs = highlighted[0].latLngs.concat(highlighted[1].latLngs)
+  highlighted[0].pointsInTrace = highlighted[0].pointsInTrace.concat(highlighted[1].pointsInTrace)
+  highlighted[0].points_info = highlighted[0].points_info.concat(highlighted[1].points_info)
+  highlighted[0].distance += highlighted[1].distance;
+  highlighted[0].consumption += highlighted[1].consumption;
+  highlighted.pop()
+  myDiv.innerHTML = ""
+  showInfo(highlighted[0])
+  console.log(highlighted)
 }
 
 window.movePoint = movePoint;
