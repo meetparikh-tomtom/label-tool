@@ -229,8 +229,26 @@ function editPoint(d, point) {
   d.list_items[point].classList.add('hint')
 }
 
+function download(content, fileName, contentType) {
+  const a = document.createElement("a");
+  const file = new Blob([content], { type: contentType });
+  a.href = URL.createObjectURL(file);
+  a.download = fileName;
+  a.click();
+}
 
+function exportdata() {
+  console.log(data)
+  const new_data = data.map(({latLngs, line, index, points_info, ...keepAttrs}) => keepAttrs)
+  console.log(new_data)
+  download(JSON.stringify(new_data), "labeled_data.json", "text/plain");
+}
 
+function mergetracks() {
+  alert("merge")
+}
 
 window.movePoint = movePoint;
 window.remove_highlight = remove_highlight;
+window.exportdata = exportdata;
+window.mergetracks = mergetracks;

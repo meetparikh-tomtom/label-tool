@@ -57,3 +57,31 @@ body {
 .slist li.active {
   background: #ecffe7;
 }
+
+#float_finish {
+	position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:20px;
+	background-color:rgb(82, 82, 82);
+	color:#FFF;
+	border-radius:15px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #999;
+  border-width: 0;
+}
+
+#float_merge {
+  position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:90px;
+	background-color:rgb(82, 82, 82);
+	color:#FFF;
+	border-radius:15px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #999;
+  border-width: 0;
+}
