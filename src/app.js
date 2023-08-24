@@ -1,7 +1,9 @@
 require("leaflet-hotline")(L);
 
 let globals = {
-  highlighted: undefined
+  highlighted: undefined,
+  errorTracks: [],
+  potentialErrorTracks: []
 };
 
 const HIGHLIGHTED_PALETTE = {
@@ -43,7 +45,16 @@ data.forEach((d, i) => {
     [Infinity, -Infinity],
   );
   // hack: leaflet hotline gives an err
-  if (d.maxCharge == d.minCharge) d.maxCharge += 0.00001;
+  if (d.maxCharge == d.minCharge) {   // potential err
+    d.maxCharge += 0.00001;
+    let errObj = {
+      tripId: d.trip_id,
+      minCharge: d.minCharge,
+      maxCharge: d.minCharge,
+      pointsInTrace: d.pointsInTrace
+    };
+    globals.potentialErrorTracks.push(errObj);
+  }
   [d.distance, _] = d.latLngs
   .slice(1)
   .reduce((acc, p) => [p.distanceTo(acc[1]) + acc[0], p], [0, d.latLngs[0]]);
@@ -120,3 +131,69 @@ data.map((d) => {
     ).addTo(map);
     showInfo();
 });
+
+// Event listeners for buttons
+
+function download(data, filename, type) {
+  var file = new Blob([data], {type: type});
+  var a = document.createElement("a");
+  var url = URL.createObjectURL(file);
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    }, 0);
+}
+
+function addError() {
+  if (!globals.highlighted) {
+    alert("No Route Selected, Please Select Error Route");
+  } else {
+    let errObj = {
+      tripId: globals.highlighted.d.trip_id,
+      minCharge: globals.highlighted.d.minCharge,
+      maxCharge: globals.highlighted.d.maxCharge,
+      pointsInTrace: globals.highlighted.d.pointsInTrace
+    };
+    globals.errorTracks.push(errObj);
+    alert("Route Added To Errors");
+  }
+}
+
+const elAddErr = document.getElementById("addError");
+elAddErr.addEventListener("click", addError, false);
+
+function saveErrors() {
+  errStr = JSON.stringify(globals.errorTracks);
+  download(errStr,"errors.json","text/plain");
+}
+
+function getErrors() {
+  if (globals.errorTracks.length == 0) {
+    alert("No Route Added To Errors");
+  } else {
+    saveErrors();
+  }
+}
+
+const elGetErrors = document.getElementById("getErrors");
+elGetErrors.addEventListener("click", getErrors, false);
+
+function savePotentialErrors() {
+  potentialErrStr = JSON.stringify(globals.potentialErrorTracks);
+  download(potentialErrStr,"potential_errors.json","text/plain");
+}
+
+function getPotentialErrors() {
+  if (globals.potentialErrorTracks.length == 0) {
+    alert("No Potential Route Found");
+  } else {
+    savePotentialErrors();
+  }
+}
+
+const elPotentialErrors = document.getElementById("potentialErrors");
+elPotentialErrors.addEventListener("click", getPotentialErrors, false);

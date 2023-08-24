@@ -25,3 +25,30 @@ body {
   width: 20%;
   margin: 1em 1em;
 }
+
+#potentialErrors {
+	position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:40px;
+	text-align:center;
+}
+
+#getErrors {
+  position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:140px;
+	text-align:center;
+}
+
+#addError {
+  position:fixed;
+	width:60px;
+	height:40px;
+	bottom:20px;
+	right:240px;
+	text-align:center;
+}
