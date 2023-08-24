@@ -1,5 +1,9 @@
 require("leaflet-hotline")(L);
 
+let globals = {
+  highlighted: undefined
+};
+
 const HIGHLIGHTED_PALETTE = {
   0.0: "red",
   0.5: "yellow",
@@ -30,13 +34,19 @@ var data = require("../data/results_processed.json");
 
 data.forEach((d, i) => {
   d.index = i;  // trip_id
-  d.latLngs = d.pointsInTrace.map((p) => [p.latitude, p.longitude, p.charge]);
+  // z coordinate / "altitude" is charge for hotline
+  d.latLngs = d.pointsInTrace.map((p) =>
+    L.latLng(p.latitude, p.longitude, p.charge),
+  );
   [d.minCharge, d.maxCharge] = d.pointsInTrace.reduce(
     (acc, p) => [Math.min(acc[0], p.charge), Math.max(acc[1], p.charge)],
     [Infinity, -Infinity],
   );
   // hack: leaflet hotline gives an err
   if (d.maxCharge == d.minCharge) d.maxCharge += 0.00001;
+  [d.distance, _] = d.latLngs
+  .slice(1)
+  .reduce((acc, p) => [p.distanceTo(acc[1]) + acc[0], p], [0, d.latLngs[0]]);
 });
 
 var map = L.map("map").setView([48.95293, 8.91368], 13);
@@ -45,12 +55,33 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
+var routeInfo = document.getElementById("info");
+function showInfo() {
+  var innerHtml = "No Route Selected";
+  if (globals.highlighted) {
+    innerHtml = `
+      <div>
+        <h3> Route: ${globals.highlighted.d.index} </h3>
+        <span> Number of points: ${globals.highlighted.d.latLngs.length} </span>
+        <br/>
+        <span>Distance: ${Math.round(globals.highlighted.d.distance)}m</span>
+        <br />
+        <span>Min Charge: ${globals.highlighted.d.minCharge}</span>
+        <br />
+        <span>Max Charge: ${globals.highlighted.d.maxCharge}</span>
+        <br />
+      </div>
+      `;
+  }
+  routeInfo.innerHTML = innerHtml;
+}
+
 // Displaying markers for every point seems to slow down rendering
 // Highlight a route => dont slow down browser
 function highlight(d) {
-  if (this.highlighted) {
-    this.highlighted.chargeMarkersLayer.remove();
-    this.highlighted.d.line.setStyle({
+  if (globals.highlighted) {
+    globals.highlighted.chargeMarkersLayer.remove();
+    globals.highlighted.d.line.setStyle({
       outlineWidth: 1,
       palette: NORMAL_PALETTE,
     });
@@ -58,16 +89,19 @@ function highlight(d) {
   d.line.setStyle({ outlineWidth: 5, palette: HIGHLIGHTED_PALETTE });
   d.line.bringToFront();
   const markers = d.latLngs.map((latLng, i) =>
-    L.marker(latLng).bindPopup(`Charge ${d.pointsInTrace[i].charge} Point ${i}`)
+    L.marker(latLng).bindPopup(
+      `Charge ${d.pointsInTrace[i].charge} Point ${i}`,
+    ),
   );
   if (markers.length) {
     markers[0].setIcon(START_ICON);
     markers[markers.length - 1].setIcon(END_ICON);
   }
-  this.highlighted = {
+  globals.highlighted = {
     d,
     chargeMarkersLayer: L.featureGroup(markers).addTo(map),
   };
+  showInfo();
 }
 
 data.map((d) => {
@@ -84,4 +118,5 @@ data.map((d) => {
       "click",
       () => highlight(d),
     ).addTo(map);
+    showInfo();
 });
