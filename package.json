@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "parcel",
         "build": "parcel build",
-        "prepare": "husky install"
+        "prepare": "husky install && chmod ug+x .husky/*"
     },
     "keywords": [],
     "author": "",
