@@ -59,6 +59,7 @@ data.forEach((d, i) => {
   //);
   // hack: leaflet hotline gives an err
   //if (d.maxCharge == d.minCharge) d.maxCharge += 0.00001;
+  d.approve = false;
   d.points_info = d.pointsInTrace.map((p,i) => 
     [p.index, p.charge, p.rounded_timestamp]
   );
@@ -357,6 +358,7 @@ function approvetrack(){
   if(highlighted.length!=1) return;
   highlighted[0].chargeMarkersLayer.remove();
   highlighted[0].line.remove();
+  highlighted[0].approve = true;
   highlighted.pop();
   myDiv.innerHTML = "";
   checkButtons();
@@ -402,7 +404,7 @@ function showList() {
   myDiv.innerHTML = "<div class='track_info'></div>"
   var innerHTML = ""
   console.log(data[0])
-  var subset = data.slice(0,100)
+  var subset = data.filter((x)=>{return x.approve == false}).slice(0,100)
   console.log(subset)
   var itemsProcessed = 0
   subset.forEach(d => {
@@ -423,6 +425,9 @@ function showList() {
 
 function focusTrack(id) {
   console.log("focus")
+  console.log(id)
+  console.log(data[id].latLngs[0])
+  map.setView([data[id].latLngs[0][0], data[id].latLngs[0][1]], 13)
 }
 
 window.movePoint = movePoint;
