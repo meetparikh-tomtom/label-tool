@@ -191,7 +191,8 @@ function highlight(d) {
 }
 
 function showInfo(d) {
-  var innerHtml = "none";
+  if(highlighted.length == 1) myDiv.innerHTML = ""
+  var innerHtml = "";
   var inner_data = "";
   d.points_info.forEach( point => {
     inner_data+= `
@@ -395,27 +396,33 @@ function split(id){
 }
 
 function showList() {
+  if(highlighted.length > 0) remove_highlight(highlighted[0])
+  if(highlighted.length > 0) remove_highlight(highlighted[0])
   console.log("show list")
-  myDiv.innerHTML = "<div class='track_info'>";
+  myDiv.innerHTML = "<div class='track_info'></div>"
   var innerHTML = ""
   console.log(data[0])
   var subset = data.slice(0,100)
+  console.log(subset)
+  var itemsProcessed = 0
   subset.forEach(d => {
     if(d.line) {
       innerHTML += `
-      <div id=${d.index} class="point_info">
-        <div class="close" onclick="remove_highlight(${d.index})">&#10005;</div>
-        <h3> Route id: ${d.index}</h3> 
-        <p>${d.latLngs.length} points | ${d.index}kWh | ${d.index}m</p>
+      <div id=${d.index} class="track_preview" onclick="focusTrack(${d.index})">
+        <span> <b>Route id: ${d.index}:</b> &nbsp &nbsp ${d.latLngs.length} points | ${d.index}kWh | ${d.index}m </span>
       </div>
       `;
     }
     itemsProcessed++;
-    if(itemsProcessed === subset.length) {
-      myDiv += innerHTML
-      myDiv += '</div>'
+    if(itemsProcessed == subset.length) {
+      console.log(myDiv.getElementsByClassName('track_info')[0].innerHTML)
+      myDiv.getElementsByClassName('track_info')[0].innerHTML += innerHTML
     }
   })
+}
+
+function focusTrack(id) {
+  console.log("focus")
 }
 
 window.movePoint = movePoint;
@@ -426,3 +433,4 @@ window.discardtrack = discardtrack;
 window.approvetrack = approvetrack;
 window.split = split;
 window.showList = showList;
+window.focusTrack = focusTrack;
