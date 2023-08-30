@@ -16,14 +16,18 @@
 <body>
   <div id="map"></div>
   <div id="info"></div>
-  <button id="float_finish" onclick="exportdata()">
+  <button id="float_finish" class="zero" onclick="exportdata()">
     Finish
   </button>
-  <button id="float_merge" onclick="mergetracks()">
+  <button id="float_merge" class="two" style="display:none;" onclick="mergetracks()">
     Merge
   </button>
-  <button id="float_discard" onclick="discardtrack()">
+  <button id="float_discard" class="one" style="display:none;" onclick="discardtrack()">
     Discard
   </button>
+  <button id="float_approve" class="one" style="display:none;" onclick="approvetrack()">
+    Approve
+  </button>
+  <button id="float_list" onclick="showList()">Show list</button>
 </body>
 </html>

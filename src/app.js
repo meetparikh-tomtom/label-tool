@@ -42,7 +42,6 @@ var highlighted = []
 // console.log(data[0].pointsInTrace);
 // console.log(data[0].pointsInTrace[0]);
 
-
 var map = L.map("map").setView([48.95293, 8.91368], 13);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution:
@@ -75,6 +74,8 @@ data.forEach((d, i) => {
     ).addTo(map);
 });
 
+var next_trip_id = data[data.length-1]['trip_id']
+
 function redraw(d){
   d.line.remove();
   d.chargeMarkersLayer.remove();
@@ -101,6 +102,40 @@ function redraw(d){
   }
   d.chargeMarkersLayer = L.featureGroup(markers).addTo(map) 
 }
+
+function checkButtons(){
+  num = highlighted.length;
+  var zeroButton = document.getElementsByClassName("zero")[0];
+  var oneButton = document.getElementsByClassName("one");
+  var twoButton = document.getElementsByClassName("two")[0];
+  console.log(num)
+  switch(num){
+    case 0: {
+      console.log("zero")
+      oneButton[0].style.display = "none";
+      oneButton[1].style.display = "none";
+      twoButton.style.display = "none";
+      zeroButton.style.display = "block";
+      break;
+    }
+    case 1: {
+      console.log("one")
+      zeroButton.style.display = "none";
+      twoButton.style.display = "none";
+      oneButton[0].style.display = "block";
+      oneButton[1].style.display = "block";
+      break;
+    }
+    case 2: {
+      console.log("two")
+      oneButton[0].style.display = "none";
+      oneButton[1].style.display = "none";
+      zeroButton.style.display = "none";
+      twoButton.style.display = "block";
+      break;
+    }
+  }
+}
 // Displaying markers for every point seems to slow down rendering
 // Highlight a route => dont slow down browser
 function remove_highlight(d){
@@ -118,9 +153,11 @@ function remove_highlight(d){
   });
   d.line.bringToFront();
   highlighted.splice(index, 1);
+  
   console.log(d)
   console.log(highlighted)
   myDiv.removeChild(document.getElementById(d.index));
+  checkButtons();
 }
 
 function highlight(d) {
@@ -150,6 +187,7 @@ function highlight(d) {
   highlighted.push(d)
   console.log(highlighted)
   showInfo(d);
+  checkButtons();
 }
 
 function showInfo(d) {
@@ -159,7 +197,8 @@ function showInfo(d) {
     inner_data+= `
       <li class="point_info" id="${point[0].toString()}"> 
         <span>id: ${point[0].toString()} | SOC: ${point[1].toString()} | timestamp: ${point[2].toString()} </span>
-      </li>`
+      </li>
+      <div class="line" onclick="split(${point[0].toString()})"></div>`
   });
   innerHtml = `
   <div id=${d.index} class="track_info">
@@ -255,6 +294,7 @@ function movePoint(track1, point1_pos, track2, point2_pos){
     redraw(highlighted[track2]);
     showInfo(highlighted[track2]);
   }
+  checkButtons();
 }
 
 // add someway to edit
@@ -297,17 +337,85 @@ function mergetracks() {
   highlighted.pop()
   myDiv.innerHTML = ""
   showInfo(highlighted[0])
-  console.log(highlighted)
+  console.log(highlighted);
+  checkButtons();
 }
 
 function discardtrack(){
   if(highlighted.length!=1) return;
-  highlighted[0].chargeMarkersLayer.remove()
-  highlighted[0].line.remove()
-  ind = data.map(e => e.trip_id).indexOf(highlighted[0].trip_id)
+  highlighted[0].chargeMarkersLayer.remove();
+  highlighted[0].line.remove();
+  ind = data.map(e => e.trip_id).indexOf(highlighted[0].trip_id);
   data.splice(ind, 1);
-  highlighted.pop()
-  myDiv.innerHTML = ""
+  highlighted.pop();
+  myDiv.innerHTML = "";
+  checkButtons();
+}
+
+function approvetrack(){
+  if(highlighted.length!=1) return;
+  highlighted[0].chargeMarkersLayer.remove();
+  highlighted[0].line.remove();
+  highlighted.pop();
+  myDiv.innerHTML = "";
+  checkButtons();
+}
+
+function split(id){
+  console.log(id)
+  if(highlighted.length!=1) return;
+  console.log(highlighted[0]['points_info'].map(e => e[0]))
+  let index = highlighted[0]['points_info'].map(e => e[0]).indexOf(id);
+  index++;
+  console.log(index)
+  index1 = highlighted[0]['index']
+  trip_id1 = highlighted[0]['trip_id']
+  trip_id2 = next_trip_id + 1;
+  next_trip_id++;
+  track = data[index1]
+  remove_highlight(highlighted[0])
+  pi2 = track.points_info.slice(index);
+  track.points_info.splice(index);
+  ll2 = track.latLngs.slice(index)
+  track.latLngs.splice(index)
+  pt2 = track.pointsInTrace.slice(index)
+  track.pointsInTrace.splice(index)
+  let new_trip = {trip_id: trip_id2, points_info: pi2, latLngs: ll2, pointsInTrace:pt2, index: data.length, line:track.line, chargeMarkersLayer: track.chargeMarkersLayer}
+  data.push(new_trip)
+  console.log(data[data.length-1])
+  console.log("split"); 
+  console.log(track)
+  highlighted.push(track)
+  highlighted.push(new_trip)
+  showInfo(highlighted[0]);
+  redraw(highlighted[0]);
+  redraw(highlighted[1]);
+  showInfo(highlighted[1]);
+  checkButtons();
+}
+
+function showList() {
+  console.log("show list")
+  myDiv.innerHTML = "<div class='track_info'>";
+  var innerHTML = ""
+  console.log(data[0])
+  var subset = data.slice(0,100)
+  subset.forEach(d => {
+    if(d.line) {
+      innerHTML += `
+      <div id=${d.index} class="point_info">
+        <div class="close" onclick="remove_highlight(${d.index})">&#10005;</div>
+        <h3> Route id: ${d.index}</h3> 
+        <p>${d.latLngs.length} points | ${d.index}kWh | ${d.index}m</p>
+      </div>
+      `;
+    }
+    itemsProcessed++;
+    if(itemsProcessed === subset.length) {
+      myDiv += innerHTML
+      myDiv += '</div>'
+    }
+  })
 }
 
 window.movePoint = movePoint;
@@ -315,3 +423,6 @@ window.remove_highlight = remove_highlight;
 window.exportdata = exportdata;
 window.mergetracks = mergetracks;
 window.discardtrack = discardtrack;
+window.approvetrack = approvetrack;
+window.split = split;
+window.showList = showList;
