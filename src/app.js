@@ -35,7 +35,7 @@ START_ICON.options.shadowSize = [0,0]
 END_ICON.options.shadowSize = [0,0]
 
 const { latLng } = require("leaflet");
-var data = require("../data/results_processed.json");
+var data = require("../data/result.json");
 var highlighted = []
 
 // console.log(data.length);
@@ -60,6 +60,7 @@ data.forEach((d, i) => {
   // hack: leaflet hotline gives an err
   //if (d.maxCharge == d.minCharge) d.maxCharge += 0.00001;
   d.approve = false;
+  d.discard = false;
   d.points_info = d.pointsInTrace.map((p,i) => 
     [p.index, p.charge, p.rounded_timestamp]
   );
@@ -117,6 +118,7 @@ function checkButtons(){
       oneButton[1].style.display = "none";
       twoButton.style.display = "none";
       zeroButton.style.display = "block";
+      showList();
       break;
     }
     case 1: {
@@ -205,7 +207,7 @@ function showInfo(d) {
   innerHtml = `
   <div id=${d.index} class="track_info">
     <div class="close" onclick="remove_highlight(${d.index})">&#10005;</div>
-    <h3> Route id: ${d.index}</h3> 
+    <h3> Route id: ${d.trip_id}</h3> 
     <p>${d.latLngs.length} points | ${d.index}kWh | ${d.index}m</p>
     <ul class="slist">
       ${inner_data}
@@ -318,7 +320,7 @@ function download(content, fileName, contentType) {
 
 function exportdata() {
   console.log(data)
-  const new_data = data.map(({latLngs, line, index, points_info, ...keepAttrs}) => keepAttrs)
+  const new_data = data.map(({latLngs, line, index, points_info, chargeMarkersLayer, ...keepAttrs}) => keepAttrs)
   console.log(new_data)
   download(JSON.stringify(new_data), "labeled_data.json", "text/plain");
 }
@@ -347,8 +349,9 @@ function discardtrack(){
   if(highlighted.length!=1) return;
   highlighted[0].chargeMarkersLayer.remove();
   highlighted[0].line.remove();
-  ind = data.map(e => e.trip_id).indexOf(highlighted[0].trip_id);
-  data.splice(ind, 1);
+  highlighted[0].discard = true;
+  //ind = data.map(e => e.trip_id).indexOf(highlighted[0].trip_id);
+  //data.splice(ind, 1);
   highlighted.pop();
   myDiv.innerHTML = "";
   checkButtons();
@@ -404,14 +407,14 @@ function showList() {
   myDiv.innerHTML = "<div class='track_info'></div>"
   var innerHTML = ""
   console.log(data[0])
-  var subset = data.filter((x)=>{return x.approve == false}).slice(0,100)
+  var subset = data.filter((x)=>{return x.approve == false && x.discard == false}).slice(0,100)
   console.log(subset)
   var itemsProcessed = 0
   subset.forEach(d => {
     if(d.line) {
       innerHTML += `
       <div id=${d.index} class="track_preview" onclick="focusTrack(${d.index})">
-        <span> <b>Route id: ${d.index}:</b> &nbsp &nbsp ${d.latLngs.length} points | ${d.index}kWh | ${d.index}m </span>
+        <span> <b>Route id: ${d.trip_id}:</b> &nbsp &nbsp ${d.latLngs.length} points | ${d.index}kWh | ${d.index}m </span>
       </div>
       `;
     }
@@ -428,6 +431,7 @@ function focusTrack(id) {
   console.log(id)
   console.log(data[id].latLngs[0])
   map.setView([data[id].latLngs[0][0], data[id].latLngs[0][1]], 13)
+  highlight(data[id])
 }
 
 window.movePoint = movePoint;
